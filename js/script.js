@@ -1,19 +1,18 @@
-
-//Seleção de elementos
+// Seleção de elementos
 const todoForm = document.querySelector("#todo-form");
 const todoInput = document.querySelector("#todo-input");
 const todoList = document.querySelector("#todo-list");
 const editForm = document.querySelector("#edit-form");
 const editInput = document.querySelector("#edit-input");
-const searchInput = document.querySelector("#search-input");
 const cancelEditBtn = document.querySelector("#cancel-edit-btn");
-const eraseButton= document.querySelector("#erase-button");
-const tarefas = document.querySelectorAll(".todo");
+const searchInput = document.querySelector("#search-input");
+const eraseBtn = document.querySelector("#erase-button");
+const filterBtn = document.querySelector("#filter-select");
 
 let oldInputValue;
 
-//Funções
-const saveTodo = text => {
+// Funções
+const saveTodo = (text, done = 0, save = 1) => {
   const todo = document.createElement("div");
   todo.classList.add("todo");
 
@@ -23,7 +22,7 @@ const saveTodo = text => {
 
   const doneBtn = document.createElement("button");
   doneBtn.classList.add("finish-todo");
-  doneBtn.innerHTML = '<i class="fa-sharp fa-solid fa-check"></i>';
+  doneBtn.innerHTML = '<i class="fa-solid fa-check"></i>';
   todo.appendChild(doneBtn);
 
   const editBtn = document.createElement("button");
@@ -33,131 +32,218 @@ const saveTodo = text => {
 
   const deleteBtn = document.createElement("button");
   deleteBtn.classList.add("remove-todo");
-  deleteBtn.innerHTML = '<i class="fa-sharp fa-solid fa-trash"></i>';
+  deleteBtn.innerHTML = '<i class="fa-solid fa-xmark"></i>';
   todo.appendChild(deleteBtn);
 
-  todoList.appendChild(todo);
-};
-
-const loadTodos = () => {
-  const todos = localStorage.getItem("todos");
-  if (todos) {
-    const todosArr = JSON.parse(todos);
-    todosArr.forEach(todoText => {
-      saveTodo(todoText);
-    });
+  // Utilizando dados da localStorage
+  if (done) {
+    todo.classList.add("done");
   }
+
+  if (save) {
+    saveTodoLocalStorage({ text, done: 0 });
+  }
+
+  todoList.appendChild(todo);
+
+  todoInput.value = "";
 };
 
-const saveTodos = () => {
-  const todosArr = [];
-  const todoTitles = todoList.querySelectorAll("h3");
-  todoTitles.forEach(todoTitle => {
-    todosArr.push(todoTitle.innerText);
-  });
-  localStorage.setItem("todos", JSON.stringify(todosArr));
-};
-
-const toggleForm = () => {
+const toggleForms = () => {
   editForm.classList.toggle("hide");
   todoForm.classList.toggle("hide");
   todoList.classList.toggle("hide");
 };
 
-const updateTodo = text => {
+const updateTodo = (text) => {
   const todos = document.querySelectorAll(".todo");
-todos.forEach(todo => {
-if (todo.querySelector("h3").innerText === oldInputValue) {
-todo.querySelector("h3").innerText = text;
-toggleForm();
-}
-});
-};
 
-const finishTodo = todo => {
-todo.classList.toggle("done");
-};
+  todos.forEach((todo) => {
+    let todoTitle = todo.querySelector("h3");
 
-const removeTodo = todo => {
-todo.remove();
-};
+    if (todoTitle.innerText === oldInputValue) {
+      todoTitle.innerText = text;
 
-function filtrar(){
-  if(searchInput.value !=""){
-    const tarefas = document.querySelectorAll(".todo");
-    for(let tarefa of tarefas){
-      let titulo = tarefa.querySelector('h3');
-      titulo = titulo.textContent.toLowerCase();
-
-      let textFiltrado = searchInput.value.toLowerCase();
-      
-      if(!titulo.includes(textFiltrado)){
-        tarefa.style.display="none";
-      }
-      else{
-        tarefa.style.display="flex";
-      }
-      }
-  }else{{
-    const tarefas = document.querySelectorAll(".todo");
-      for(tarefa of tarefas){
-        tarefa.style.display="flex";
-      }
+      // Utilizando dados da localStorage
+      updateTodoLocalStorage(oldInputValue, text);
     }
-  }
-}
-
-//Event Listeners
-todoForm.addEventListener("submit", e => {
-e.preventDefault();
-const todoText = todoInput.value;
-if (todoText) {
-saveTodo(todoText);
-saveTodos();
-todoInput.value = "";
-}
-});
-
-todoList.addEventListener("click", e => {
-if (e.target.classList.contains("finish-todo")) {
-const todo = e.target.parentElement;
-finishTodo(todo);
-saveTodos();
-}
- else if (e.target.classList.contains("remove-todo")) {
-const todo = e.target.parentElement;
-removeTodo(todo);
-saveTodos();
-} 
-else if (e.target.classList.contains("edit-todo")) {
-toggleForm();
-const todo = e.target.parentElement;
-oldInputValue = todo.querySelector("h3").innerText;
-editInput.value = oldInputValue;
-}
-});
-
-editForm.addEventListener("submit", e => {
-e.preventDefault();
-const newValue = editInput.value;
-if (newValue) {
-updateTodo(newValue);
-saveTodos();
-}
-});
-cancelEditBtn.addEventListener("click", e => {
-    e.preventDefault();
-    toggleForm();
-    editInput.value = "";
   });
-  eraseButton.addEventListener("click",e=>{
+};
+
+const getSearchedTodos = (search) => {
+  const todos = document.querySelectorAll(".todo");
+
+  todos.forEach((todo) => {
+    const todoTitle = todo.querySelector("h3").innerText.toLowerCase();
+    console.log(todoTitle);
+
+    if (!todoTitle.includes(search)) {
+      todo.style.display = "none";
+    } else{
+      todo.style.display = "flex";
+    }
+  });
+};
+
+const filterTodos = (filterValue) => {
+  const todos = document.querySelectorAll(".todo");
+
+  switch (filterValue) {
+    case "all":
+      todos.forEach((todo) => (todo.style.display = "flex"));
+
+      break;
+
+    case "done":
+      todos.forEach((todo) =>
+        todo.classList.contains("done")
+          ? (todo.style.display = "flex")
+          : (todo.style.display = "none")
+      );
+
+      break;
+
+    case "todo":
+      todos.forEach((todo) =>
+        !todo.classList.contains("done")
+          ? (todo.style.display = "flex")
+          : (todo.style.display = "none")
+      );
+
+      break;
+
+    default:
+      break;
+  }
+};
+
+// Eventos
+todoForm.addEventListener("submit", (e) => {
   e.preventDefault();
-  searchInput.value="";
-})
-searchInput.addEventListener("input", filtrar)
 
-//Load saved todos
+  const inputValue = todoInput.value;
+
+  if (inputValue) {
+    saveTodo(inputValue);
+  }
+});
+
+document.addEventListener("click", (e) => {
+  const targetEl = e.target;
+  const parentEl = targetEl.closest("div");
+  let todoTitle;
+
+  if (parentEl && parentEl.querySelector("h3")) {
+    todoTitle = parentEl.querySelector("h3").innerText || "";
+  }
+
+  if (targetEl.classList.contains("finish-todo")) {
+    parentEl.classList.toggle("done");
+
+    updateTodoStatusLocalStorage(todoTitle);
+  }
+
+  if (targetEl.classList.contains("remove-todo")) {
+    parentEl.remove();
+
+    // Utilizando dados da localStorage
+    removeTodoLocalStorage(todoTitle);
+  }
+
+  if (targetEl.classList.contains("edit-todo")) {
+    toggleForms();
+
+    editInput.value = todoTitle;
+    oldInputValue = todoTitle;
+  }
+});
+
+cancelEditBtn.addEventListener("click", (e) => {
+  e.preventDefault();
+  toggleForms();
+});
+
+editForm.addEventListener("submit", (e) => {
+  e.preventDefault();
+
+  const editInputValue = editInput.value;
+
+  if (editInputValue) {
+    updateTodo(editInputValue);
+  }
+
+  toggleForms();
+});
+
+searchInput.addEventListener("keyup", (e) => {
+  const search = e.target.value;
+
+  getSearchedTodos(search);
+});
+
+eraseBtn.addEventListener("click", (e) => {
+  e.preventDefault();
+
+  searchInput.value = "";
+
+  searchInput.dispatchEvent(new Event("keyup"));
+});
+
+filterBtn.addEventListener("change", (e) => {
+  const filterValue = e.target.value;
+
+  filterTodos(filterValue);
+});
+
+// Local Storage
+const getTodosLocalStorage = () => {
+  const todos = JSON.parse(localStorage.getItem("todos")) || [];
+
+  return todos;
+};
+
+const loadTodos = () => {
+  const todos = getTodosLocalStorage();
+
+  todos.forEach((todo) => {
+    saveTodo(todo.text, todo.done, 0);
+  });
+};
+
+const saveTodoLocalStorage = (todo) => {
+  const todos = getTodosLocalStorage();
+
+  todos.push(todo);
+
+  localStorage.setItem("todos", JSON.stringify(todos));
+};
+
+const removeTodoLocalStorage = (todoText) => {
+  const todos = getTodosLocalStorage();
+
+  const filteredTodos = todos.filter((todo) => todo.text != todoText);
+
+  localStorage.setItem("todos", JSON.stringify(filteredTodos));
+};
+
+const updateTodoStatusLocalStorage = (todoText) => {
+  const todos = getTodosLocalStorage();
+
+  todos.map((todo) =>
+    todo.text === todoText ? (todo.done = !todo.done) : null
+  );
+
+  localStorage.setItem("todos", JSON.stringify(todos));
+};
+
+const updateTodoLocalStorage = (todoOldText, todoNewText) => {
+  const todos = getTodosLocalStorage();
+
+  todos.map((todo) =>
+    todo.text === todoOldText ? (todo.text = todoNewText) : null
+  );
+
+  localStorage.setItem("todos", JSON.stringify(todos));
+};
+
 loadTodos();
-  
-
-//Adicionei os eventos para o botão cancelar edição e para o botão de atualizar tarefa. Também adicionei o salvamento dos todos quando há alguma alteração na lista de tarefas.
