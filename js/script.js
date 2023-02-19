@@ -1,8 +1,3 @@
-// 
-
-
-
-
 
 //Seleção de elementos
 const todoForm = document.querySelector("#todo-form");
@@ -12,6 +7,8 @@ const editForm = document.querySelector("#edit-form");
 const editInput = document.querySelector("#edit-input");
 const searchInput = document.querySelector("#search-input");
 const cancelEditBtn = document.querySelector("#cancel-edit-btn");
+const eraseButton= document.querySelector("#erase-button");
+const tarefas = document.querySelectorAll(".todo");
 
 let oldInputValue;
 
@@ -85,6 +82,31 @@ const removeTodo = todo => {
 todo.remove();
 };
 
+function filtrar(){
+  if(searchInput.value !=""){
+    const tarefas = document.querySelectorAll(".todo");
+    for(let tarefa of tarefas){
+      let titulo = tarefa.querySelector('h3');
+      titulo = titulo.textContent.toLowerCase();
+
+      let textFiltrado = searchInput.value.toLowerCase();
+      
+      if(!titulo.includes(textFiltrado)){
+        tarefa.style.display="none";
+      }
+      else{
+        tarefa.style.display="flex";
+      }
+      }
+  }else{{
+    const tarefas = document.querySelectorAll(".todo");
+      for(tarefa of tarefas){
+        tarefa.style.display="flex";
+      }
+    }
+  }
+}
+
 //Event Listeners
 todoForm.addEventListener("submit", e => {
 e.preventDefault();
@@ -128,6 +150,11 @@ cancelEditBtn.addEventListener("click", e => {
     toggleForm();
     editInput.value = "";
   });
+  eraseButton.addEventListener("click",e=>{
+  e.preventDefault();
+  searchInput.value="";
+})
+searchInput.addEventListener("input", filtrar)
 
 //Load saved todos
 loadTodos();
