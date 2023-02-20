@@ -246,7 +246,7 @@ const updateTodoLocalStorage = (todoOldText, todoNewText) => {
   localStorage.setItem("todos", JSON.stringify(todos));
 };
 
-
+ 
 
 
 loadTodos();
